@@ -17,7 +17,8 @@ def grid_display(n_grid,img_src):
             tiles = im[y:y+M,x:x+N]
 
             cv2.rectangle(im, (x, y), (x1, y1), (0, 0, 255))
-       
-            # cv2.imwrite("save/" + str(x) + '_' + str(y)+".png",tiles)
 
-    # cv2.imwrite("gridded.png",im)
+            #cv2.imwrite("save/" + str(x) + '_' + str(y)+".png",tiles)
+
+    cv2.imwrite("gridded.png",im)
+    return 'gridded.png'
