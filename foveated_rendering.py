@@ -24,24 +24,6 @@ for j in range(1, cols):
     cv2.line(img, (x, 0), (x, h), (0, 0, 255), 2)
 
 
-def display_class_prob(event, x, y, flags, param):
-    global zoomed_in_results
-
-    # If the mouse hovers over the detected object
-    if event == cv2.EVENT_MOUSEMOVE:
-        for result in zoomed_in_results:
-            boxes = result.boxes.cpu().numpy()  # Boxes object for bbox outputs
-            for box in boxes:
-                r = box.xyxy[0].astype(int)
-
-                # Check if the mouse position is inside the detected bounding box
-                if r[0] <= x <= r[2] and r[1] <= y <= r[3]:
-                    class_name = result.names[box.get_field("labels")[0]]
-                    probability = box.get_field("scores")[0]
-                    text = f"{class_name}: {probability:.2f}"
-                    cv2.putText(img, text, (r[0], r[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
-                    # cv2.imshow("Grid", img)
-
 
 # Define the zoom factor for the hovered grid
 zoom_factor = 2
@@ -69,8 +51,6 @@ def mouse_event(event, x, y, flags, param):
                         img[grid_y1:grid_y2, grid_x1:grid_x2], (11, 11), 0
                     )
 
-        # # Show the blurred image
-        # cv2.imshow("Grid", blurred_img)
 
         # Zoom in on the hovered grid
         grid_x1 = col_index * w // cols
@@ -91,16 +71,13 @@ def mouse_event(event, x, y, flags, param):
         model = YOLO('yolov8n.pt')
         results = model(zoomed_in_img)
         zoomed_in_img = results[0].plot()
-        # for result in results:                                         # iterate results
-        #         boxes = result.boxes.cpu().numpy()                         # get boxes on cpu in numpy
-        #         for box in boxes:                                          # iterate boxes
-        #                 r = box.xyxy[0].astype(int)                            # get corner points as int
-        #                 print(r)                                               # print boxes
-        #                 cv2.rectangle(zoomed_in_img, r[:2], r[2:], (255, 0, 0), 2)   # draw boxes on img   
-                            
-                # Display the annotated frame
+        blurred_img[grid_y1:grid_y2, grid_x1:grid_x2] = zoomed_in_img
         
-        cv2.imshow("Zoom", zoomed_in_img)
+
+
+
+        
+        # cv2.imshow("Zoom", zoomed_in_img)
 
         # cv2.imshow("Grid", blended_img)
         cv2.imshow("Grid", blurred_img)
