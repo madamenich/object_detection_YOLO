@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
+
+from PIL import Image
 # Load the image
 img = cv2.imread("s.png")
 
@@ -21,18 +23,30 @@ for j in range(1, cols):
     x = j * w // cols
     cv2.line(img, (x, 0), (x, h), (0, 0, 255), 2)
 
+
+def display_class_prob(event, x, y, flags, param):
+    global zoomed_in_results
+
+    # If the mouse hovers over the detected object
+    if event == cv2.EVENT_MOUSEMOVE:
+        for result in zoomed_in_results:
+            boxes = result.boxes.cpu().numpy()  # Boxes object for bbox outputs
+            for box in boxes:
+                r = box.xyxy[0].astype(int)
+
+                # Check if the mouse position is inside the detected bounding box
+                if r[0] <= x <= r[2] and r[1] <= y <= r[3]:
+                    class_name = result.names[box.get_field("labels")[0]]
+                    probability = box.get_field("scores")[0]
+                    text = f"{class_name}: {probability:.2f}"
+                    cv2.putText(img, text, (r[0], r[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                    # cv2.imshow("Grid", img)
+
+
 # Define the zoom factor for the hovered grid
 zoom_factor = 2
 # Define a variable to store the zoomed-in image
 zoomed_in_img = None
-def detect_image(img):
-    model = YOLO("yolov8n.pt")
-    results  = model.predict(img, conf = 0.5)
-    for result in result:
-        boxes = result.boxes  # Boxes object for bbox outputs
-        masks = result.masks  # Masks object for segmentation masks outputs
-        keypoints = result.keypoints  # Keypoints object for pose outputs
-        probs = result.probs  # Probs object for classification outputs
 
 # Define a function to handle mouse events
 def mouse_event(event, x, y, flags, param):
@@ -74,37 +88,21 @@ def mouse_event(event, x, y, flags, param):
         global zoomed_in_img
         # Save the zoomed-in image for object detection
         zoomed_in_img = img[grid_y1:grid_y2, grid_x1:grid_x2]
+        model = YOLO('yolov8n.pt')
+        results = model(zoomed_in_img)
+        zoomed_in_img = results[0].plot()
+        # for result in results:                                         # iterate results
+        #         boxes = result.boxes.cpu().numpy()                         # get boxes on cpu in numpy
+        #         for box in boxes:                                          # iterate boxes
+        #                 r = box.xyxy[0].astype(int)                            # get corner points as int
+        #                 print(r)                                               # print boxes
+        #                 cv2.rectangle(zoomed_in_img, r[:2], r[2:], (255, 0, 0), 2)   # draw boxes on img   
+                            
+                # Display the annotated frame
+        
+        cv2.imshow("Zoom", zoomed_in_img)
 
-        # zoomed_in_img = cv2.resize(
-        #     img[grid_y1:grid_y2, grid_x1:grid_x2], None, fx=zoom_factor, fy=zoom_factor
-        # )
-        model = YOLO("yolov8n.pt")
-        results = model.predict(zoomed_in_img)
-        for result in results:
-            boxes = result.boxes.cpu().numpy()  # Boxes object for bbox outputs
-            for box in boxes:
-                r = box.xyxy[0].astype(int)
-                cv2.rectangle(zoomed_in_img,r[:2], r[2:], (0,255,0), 2)
-                
-                
-                # cv2.putText(zoomed_in_img, 'person', r[:2], r[2:],
-                #     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,0), 2)
-
-
-      
-
-
-        # cv2.rectangle(blurred_img, box.xyxy[0], (0, 0, 255), 2)
-
-
-
-        # # Paste the zoomed grid back into the output image
-        # zoomed_h, zoomed_w = zoomed_grid.shape[:2]
-        # blurred_img[
-        #     y - zoomed_h // 2 : y + zoomed_h // 2, x - zoomed_w // 2 : x + zoomed_w // 2
-        # ] = zoomed_grid
-
-        # Show the resulting image
+        # cv2.imshow("Grid", blended_img)
         cv2.imshow("Grid", blurred_img)
 # Set the mouse callback function for the window
 cv2.namedWindow("Grid")
