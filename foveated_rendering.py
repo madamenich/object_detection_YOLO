@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 from PIL import Image
 # Load the image
-img = cv2.imread("s.png")
+img = cv2.imread("t.png")
 
 # Get the height and width of the image
 h, w = img.shape[:2]
@@ -68,18 +68,19 @@ def mouse_event(event, x, y, flags, param):
         global zoomed_in_img
         # Save the zoomed-in image for object detection
         zoomed_in_img = img[grid_y1:grid_y2, grid_x1:grid_x2]
+        height, width= zoomed_in_img.shape[:2]
+        zoomed_in_img = cv2.resize(zoomed_in_img, (width*zoom_factor, height*zoom_factor), interpolation=cv2.INTER_LINEAR)
         model = YOLO('yolov8n.pt')
         results = model(zoomed_in_img)
         zoomed_in_img = results[0].plot()
+
+        # resize to fit the grid
+        zoomed_in_img = cv2.resize(zoomed_in_img, (width, height), interpolation=cv2.INTER_LINEAR)
+
+        # Display the predicted zoomed-in image in the grid
         blurred_img[grid_y1:grid_y2, grid_x1:grid_x2] = zoomed_in_img
         
 
-
-
-        
-        # cv2.imshow("Zoom", zoomed_in_img)
-
-        # cv2.imshow("Grid", blended_img)
         cv2.imshow("Grid", blurred_img)
 # Set the mouse callback function for the window
 cv2.namedWindow("Grid")
