@@ -10,8 +10,8 @@ img = cv2.imread("image.png")
 h, w = img.shape[:2]
 
 # Define the number of rows and columns
-rows = 4
-cols = 4
+rows = 8
+cols = 8
 
 # Draw the horizontal lines
 for i in range(1, rows):
@@ -95,7 +95,9 @@ def mouse_event(event, x, y, flags, param):
             # Save the zoomed-in image for object detection
             zoomed_in_img = img[grid_y1:grid_y2, grid_x1:grid_x2]
             height, width= zoomed_in_img.shape[:2]
+            
             zoomed_in_img = cv2.resize(zoomed_in_img, (width*zoom_factor, height*zoom_factor), interpolation=cv2.INTER_LINEAR)
+            zoomed_in_img = cv2.fastNlMeansDenoisingColored(zoomed_in_img,None,10,10,7,21)
             model = YOLO('yolov8n.pt')
             results = model(zoomed_in_img)
             zoomed_in_img = results[0].plot()
@@ -113,6 +115,7 @@ def mouse_event(event, x, y, flags, param):
                     grid_y1 = i * h // rows
                     grid_y2 = (i + 1) * h // rows
                     surround_grid = img[grid_y1:grid_y2, grid_x1:grid_x2]
+                    surround_grid = cv2.fastNlMeansDenoisingColored(surround_grid,None,10,10,7,21)
                     results = model(surround_grid)
                     surround_objects = results[0].plot()
                     surrounding_objects.append(surround_objects)
