@@ -46,19 +46,19 @@ def mouse_event(event, x, y, flags, param):
       
                 # Create a copy of the original image
         blurred_img = img.copy()
-        cell_x = x//h
-        cell_y = y//w
+
         # Check if the mouse is still in the same cell
         if (col_index, row_index) == current_cell:
            
             # Do not perform YOLO prediction
             return
-        # Blur the non-hovered grids with Gaussian blur
+
        
-        # Update the current cell
+    
         # Update the current cell
         current_cell = (col_index, row_index)
         print("current cell: ", current_cell)
+         # Blur the non-hovered grids with Gaussian blur
         for i in range(rows):
             for j in range(cols):
                 if i != row_index or j != col_index:
@@ -78,6 +78,22 @@ def mouse_event(event, x, y, flags, param):
         # Apply blending effect
         alpha = 0.7  # You can adjust this value to control the blending effect
         blended_img = cv2.addWeighted(img, alpha, blurred_img, 1 - alpha, 0)
+            # Create a separate image for the surrounding grid of the hovered grid
+        surround_img = np.zeros_like(img)
+    
+        # Get the indices of the surrounding grids
+        surround_indices = [
+        (col_index - 1, row_index - 1),
+        (col_index - 1, row_index),
+        (col_index - 1, row_index + 1),
+        (col_index, row_index - 1),
+        (col_index, row_index + 1),
+        (col_index + 1, row_index - 1),
+        (col_index + 1, row_index),
+        (col_index + 1, row_index + 1),
+        ]
+    
+
         # Show the blended image
         # cv2.imshow("Grid", blended_img)
         global zoomed_in_img
@@ -90,12 +106,30 @@ def mouse_event(event, x, y, flags, param):
             model = YOLO('yolov8n.pt')
             results = model(zoomed_in_img)
             zoomed_in_img = results[0].plot()
+
+            results = model(surround_img)
+            surround_img = results[0].plot()
             # resize to fit the grid
             zoomed_in_img = cv2.resize(zoomed_in_img, (width, height), interpolation=cv2.INTER_LINEAR)
             # Display the predicted zoomed-in image in the grid
             blurred_img[grid_y1:grid_y2, grid_x1:grid_x2] = zoomed_in_img
-            # Update the last_predicted_cell
-            last_predicted_cell = current_cell
+                    # Copy the surrounding grids from the original image to the separate image
+            for j, i in surround_indices:
+                if 0 <= j < cols and 0 <= i < rows:
+                    grid_x1 = j * w // cols
+                    grid_x2 = (j + 1) * w // cols
+                    grid_y1 = i * h // rows
+                    grid_y2 = (i + 1) * h // rows
+                    surround_img[grid_y1:grid_y2, grid_x1:grid_x2] = img[grid_y1:grid_y2, grid_x1:grid_x2]
+            width, height = surround_img.shape[:2]
+            results = model(surround_img)
+            surround_img = results[0].plot()
+            
+
+            
+          
+            
+
             cv2.imshow("Grid", blurred_img)
 # Set the mouse callback function for the window
 cv2.namedWindow("Grid")
