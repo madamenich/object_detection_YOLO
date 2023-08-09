@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
-
+from argparse import ArgumentParser
 from PIL import Image
 # Load the image
 img = cv2.imread("image.png")
 
+
+#TODO: Applying Grid on IMAGE
+# -----------------------------------------------------------------
 # Get the height and width of the image
 h, w = img.shape[:2]
 
@@ -22,6 +25,10 @@ for i in range(1, rows):
 for j in range(1, cols):
     x = j * w // cols
     cv2.line(img, (x, 0), (x, h), (0, 0, 255), 2)
+
+# -----------------------------------------------------------------
+
+
 
 
 
@@ -44,7 +51,7 @@ def mouse_event(event, x, y, flags, param):
         col_index = x // (w // cols)
       
       
-                # Create a copy of the original image
+        # Create a copy of the original image
         blurred_img = img.copy()
 
         # Check if the mouse is still in the same cell
@@ -95,7 +102,6 @@ def mouse_event(event, x, y, flags, param):
             # Save the zoomed-in image for object detection
             zoomed_in_img = img[grid_y1:grid_y2, grid_x1:grid_x2]
             height, width= zoomed_in_img.shape[:2]
-            
             zoomed_in_img = cv2.resize(zoomed_in_img, (width*zoom_factor, height*zoom_factor), interpolation=cv2.INTER_LINEAR)
             zoomed_in_img = cv2.fastNlMeansDenoisingColored(zoomed_in_img,None,10,10,7,21)
             model = YOLO('yolov8n.pt')
@@ -122,12 +128,16 @@ def mouse_event(event, x, y, flags, param):
                     blurred_surround_object = cv2.GaussianBlur(surrounding_objects.pop(0), (11, 11), 0)
                     blurred_img[grid_y1:grid_y2, grid_x1:grid_x2] = blurred_surround_object
             cv2.imshow("Grid", blurred_img)
+            # Enable to save the image based on the number of columns
+            #cv2.imwrite(f"fqG{cols}.png", blurred_img)
+
 # Set the mouse callback function for the window
 cv2.namedWindow("Grid")
 cv2.setMouseCallback("Grid", mouse_event)
 # Show the image
 cv2.imshow("Grid", img)
 cv2.waitKey(0)
+
 
 cv2.destroyAllWindows()
 
